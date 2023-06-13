@@ -25,7 +25,7 @@ app.set("view engine", "ejs"); // define EJS as engine
 app.use(express.urlencoded({ extended: true })); // make buffer readable.
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
