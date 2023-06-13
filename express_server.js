@@ -1,3 +1,4 @@
+const { render } = require("ejs");
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -7,7 +8,21 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.set("view engine", "ejs");
+const generateRandomString = () => {
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var result = '';
+  
+  for (var i = 0; i < 6; i++) {
+    var randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars[randomIndex];
+  }  
+  return result;
+}
+
+
+// engine specific settings
+app.set("view engine", "ejs"); // define EJS as engine
+app.use(express.urlencoded({ extended: true })); // make buffer readable.
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -16,6 +31,10 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
+});
+
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -27,14 +46,24 @@ app.get("/urls/:id", (req, res) => {
   res.render("url_shows", templateVars);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+//  handle post requests
+
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  console.log(req.body.longURL);
+  res.send("Ok");
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+
+// app.get("/urls.json", (req, res) => {
+//   res.json(urlDatabase);
+// });
+
+// app.get("/hello", (req, res) => {
+//   res.send("<html><body>Hello <b>World</b></body></html>\n");
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
