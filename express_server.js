@@ -32,17 +32,18 @@ const parseLongURL = (longURL) => {
 app.set("view engine", "ejs"); // define EJS as engine
 app.use(express.urlencoded({ extended: true })); // make buffer readable.
 
-app.get("/", (req, res) => {
+app.get("/", (req, res) => {  
   res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -50,6 +51,7 @@ app.get("/urls/:id", (req, res) => {
   if (req.params && req.params.id) {
     templateVars.id = req.params.id;
     templateVars.longURL = urlDatabase[templateVars.id];
+    templateVars.username = req.cookies["username"];
   }  
   res.render("url_shows", templateVars);
 });
