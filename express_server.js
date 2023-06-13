@@ -46,6 +46,19 @@ app.get("/urls/:id", (req, res) => {
   res.render("url_shows", templateVars);
 });
 
+//  handle shortURL redirects
+app.get("/u/:id", (req, res) => {
+  console.log("request made.");
+  if (urlDatabase.hasOwnProperty(req.params.id)) {
+    console.log(`Sending them to: ${urlDatabase[req.params.id]}`);
+    res.redirect(urlDatabase[req.params.id]);
+  } else {
+    console.log(`Sending them ...nowhere hopefully.`);
+    res.statusCode = 404;
+    res.send(`Invalid code: ${req.params.id}`);
+  }
+});
+
 //  handle post requests
 
 app.post("/urls", (req, res) => {
