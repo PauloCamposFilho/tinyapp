@@ -8,13 +8,13 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const generateRandomString = () => {
-  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var result = '';
+const generateRandomString = (length) => {
+  const arrayAlphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
   
-  for (var i = 0; i < 6; i++) {
-    var randomIndex = Math.floor(Math.random() * chars.length);
-    result += chars[randomIndex];
+  for (let i = 0; i < length; i++) {
+    let randomIndex = Math.floor(Math.random() * chars.length);
+    result += arrayAlphanumeric[randomIndex];
   }  
   return result;
 }
@@ -65,7 +65,7 @@ app.post("/urls", (req, res) => {
   // console.log(req.body);
   // console.log(req.body.longURL);
   if (req.body.longURL) {
-    const shortURL = generateRandomString();
+    const shortURL = generateRandomString(6);
     urlDatabase[shortURL] = req.body.longURL;
     res.redirect(`/urls/${shortURL}`);
   }  
