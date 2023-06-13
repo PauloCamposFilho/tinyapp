@@ -9,7 +9,7 @@ const urlDatabase = {
 };
 
 const generateRandomString = (length) => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   let result = '';
   
   for (let i = 0; i < length; i++) {
