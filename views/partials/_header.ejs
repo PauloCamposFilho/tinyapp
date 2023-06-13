@@ -16,8 +16,8 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <div class="nav-item">
-        <% if (username !== 'undefined') { %>          
+        <div class="nav-item" style="margin-top: 8px;">
+        <% if (username) { %>          
           <span>Logged in as: <%= username %></span>          
         <% } else { %>                  
           <form method="POST" action="/login">

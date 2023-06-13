@@ -1,5 +1,6 @@
 const { render } = require("ejs");
 const express = require("express");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -31,13 +32,18 @@ const parseLongURL = (longURL) => {
 // engine specific settings
 app.set("view engine", "ejs"); // define EJS as engine
 app.use(express.urlencoded({ extended: true })); // make buffer readable.
+app.use(cookieParser())
 
 app.get("/", (req, res) => {  
   res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase };  
+  if (req.cookies) {
+    templateVars.username = req.cookies["username"];
+  }
+  console.log(templateVars);
   res.render("urls_index", templateVars);
 });
 
