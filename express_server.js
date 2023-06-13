@@ -9,12 +9,12 @@ const urlDatabase = {
 };
 
 const generateRandomString = (length) => {
-  const arrayAlphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   
   for (let i = 0; i < length; i++) {
-    let randomIndex = Math.floor(Math.random() * arrayAlphanumeric.length);
-    result += arrayAlphanumeric[randomIndex];
+    let randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars[randomIndex];
   }  
   return result;
 }
