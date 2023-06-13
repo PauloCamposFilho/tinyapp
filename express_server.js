@@ -91,6 +91,13 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect("/");
 });
 
+app.post("/login", (req, res) => {
+  if (req.body.username) {
+    res.cookie("username", req.body.username);
+  }
+  res.redirect("/urls");
+});
+
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
