@@ -13,7 +13,7 @@ const generateRandomString = (length) => {
   let result = '';
   
   for (let i = 0; i < length; i++) {
-    let randomIndex = Math.floor(Math.random() * chars.length);
+    let randomIndex = Math.floor(Math.random() * arrayAlphanumeric.length);
     result += arrayAlphanumeric[randomIndex];
   }  
   return result;
