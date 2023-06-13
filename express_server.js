@@ -19,6 +19,14 @@ const generateRandomString = (length) => {
   return result;
 }
 
+const parseLongURL = (longURL) => {
+  let result = longURL.toLowerCase();
+  if (result.indexOf("http://") === -1) {
+    result = "http://" + result;
+  }
+  return result;
+};
+
 
 // engine specific settings
 app.set("view engine", "ejs"); // define EJS as engine
@@ -66,13 +74,20 @@ app.post("/urls", (req, res) => {
   // console.log(req.body.longURL);
   if (req.body.longURL) {
     const shortURL = generateRandomString(6);
-    urlDatabase[shortURL] = req.body.longURL;
+    urlDatabase[shortURL] = parseLongURL(req.body.longURL);
     res.redirect(`/urls/${shortURL}`);
   }  
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
+  res.redirect("/");
+});
+
+app.post("/urls/:id/update", (req, res) => {
+  if (req.body.longURL) {
+    urlDatabase[req.params.id] = parseLongURL(req.body.longURL);
+  }
   res.redirect("/");
 });
 

@@ -20,6 +20,10 @@
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
+        <form method="POST" action="/urls/<%=id%>/update">
+          <input type="text" name="longURL" style="min-width: 200px;" placeholder="New Redirect URL (http://)">
+          <button class="btn-save" type="submit">Save</button>
+        </form>
       </div>
       <div class="card-footer text-muted"></div>
     </div>
