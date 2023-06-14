@@ -157,10 +157,10 @@ app.get("/u/:id", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.cookies)) {
-    templateVars.message = "Cannot redirect. User is not logged in.";
-    return res.render("showMessage", templateVars);
-  }
+  // if (!isUserLoggedIn(req.cookies)) {
+  //   templateVars.message = "Cannot redirect. User is not logged in.";
+  //   return res.render("showMessage", templateVars);
+  // }
   if (Object.prototype.hasOwnProperty.call(urlDatabase, req.params.id)) {
     console.log(`Sending them to: ${urlDatabase[req.params.id]}`);
     res.redirect(urlDatabase[req.params.id]);
