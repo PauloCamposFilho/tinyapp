@@ -28,6 +28,13 @@ const parseLongURL = (longURL) => {
   return result;
 };
 
+const isUserLoggedIn = (cookies) => {
+  if (cookies.username) {
+    return true;
+  }
+  return false;
+}
+
 
 // engine specific settings
 app.set("view engine", "ejs"); // define EJS as engine
@@ -60,6 +67,14 @@ app.get("/urls/:id", (req, res) => {
     templateVars.username = req.cookies["username"];
   }  
   res.render("url_shows", templateVars);
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = { username: req.cookies["username"] };
+  if (isUserLoggedIn(req.cookies)) {
+    return res.redirect("/urls");
+  }
+  res.render("user_register", templateVars);
 });
 
 //  handle shortURL redirects
