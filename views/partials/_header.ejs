@@ -19,15 +19,16 @@
         <div class="nav-item" style="margin-top: 8px;">
         </div>
       </div>
-    </div>
-    <% if (username) { %>          
-      <span>Logged in as: <%= username %></span>
+    </div>    
+    <% if (user.email) { %>          
+      <span>Logged in as: <%= user.email %></span>
       <form method="POST" action="/logout" style="display: inline-block;">
         <button class="btn btn-primary" type="submit">Logout</button>
       </form>        
     <% } else { %>                  
       <form method="POST" action="/login">
-        <input type="text" name="username">
+        <input type="text" name="email" placeholder="Email">
+        <input type="password" name="password" placeholder="Password">
         <button class="btn btn-primary" type="submit">Login</button>
         <a class="btn btn-info" href="/register">Sign Up</a>
       </form>        
