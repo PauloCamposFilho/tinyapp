@@ -221,7 +221,7 @@ app.post("/login", (req, res) => {
   };
   if (!userRegistered({ email: req.body.email, password: req.body.password }, true)) {
     templateVars.message = "User and/or Password invalid.";
-    return res.render("showMessage", templateVars);
+    return res.status(403).render("showMessage", templateVars);
   }
   if (req.body.email) {
     res.cookie("user_id", getUserIdFromCredentials(req.body.email, req.body.password));
@@ -259,7 +259,7 @@ app.post("/register", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/");
+  res.redirect("/login");
 });
 
 app.listen(PORT, () => {
