@@ -22,9 +22,9 @@ const generateRandomString = (length) => {
 
 const parseLongURL = (longURL) => {
   let result = longURL.toLowerCase();
-  if (result.indexOf("http://") === -1) {
+  if (!result.startsWith("http://") && !result.startsWith("https://")) {
     result = "http://" + result;
-  }
+  }  
   return result;
 };
 
