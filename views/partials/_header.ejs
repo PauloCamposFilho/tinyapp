@@ -25,13 +25,9 @@
       <form method="POST" action="/logout" style="display: inline-block;">
         <button class="btn btn-primary" type="submit">Logout</button>
       </form>        
-    <% } else { %>                  
-      <form method="POST" action="/login">
-        <input type="text" name="email" placeholder="Email">
-        <input type="password" name="password" placeholder="Password">
-        <button class="btn btn-primary" type="submit">Login</button>
-        <a class="btn btn-info" href="/register">Sign Up</a>
-      </form>        
+    <% } else { %>                        
+      <a class="btn btn-primary" href="/login" style="margin-right: 10px">Login</button>
+      <a class="btn btn-info" href="/register">Sign Up</a>
     <% } %>
   </nav>
 </header>

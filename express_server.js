@@ -99,7 +99,7 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: {} };
   if (!isUserLoggedIn(req.cookies)) {
-    return res.redirect("/register");
+    return res.redirect("/login");
   }
   templateVars.user = users[req.cookies["user_id"]];
   console.log(templateVars);
@@ -111,7 +111,7 @@ app.get("/urls/new", (req, res) => {
     user: {}
   };
   if (!isUserLoggedIn(req.cookies)) {
-    return res.redirect("/register");
+    return res.redirect("/login");
   }
   templateVars.user = users[req.cookies["user_id"]];
   res.render("urls_new", templateVars);
@@ -122,7 +122,7 @@ app.get("/urls/:id", (req, res) => {
     user: {}
   };
   if (!isUserLoggedIn(req.cookies)) {
-    return res.redirect("/register");
+    return res.redirect("/login");
   }
   if (req.params && req.params.id) {
     templateVars.id = req.params.id;
@@ -138,6 +138,16 @@ app.get("/register", (req, res) => {
   };
   if (!isUserLoggedIn(req.cookies)) {
     return res.render("user_register", templateVars);
+  }
+  res.redirect("/urls");
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: {}
+  };
+  if (!isUserLoggedIn(req.cookies)) {
+    return res.render("login", templateVars);
   }
   res.redirect("/urls");
 });
@@ -229,9 +239,15 @@ app.post("/register", (req, res) => {
     password: req.body.password
   };
 
+  console.log(user);
+
+  if (!user.email || !user.password) {
+    templateVars.message = "Please make sure to input both an email AND password.";
+    return res.status(400).render("showMessage", templateVars);
+  }
   // templateVars.username = req.cookies["username"];
-  if (userRegistered(user, false)) {
-    templateVars.message = "User already registered. Please login instead or register new user.";
+  if (userRegistered(user, false)) {    
+    templateVars.message = "User already registered. Please login instead or register new user.";        
     return res.status(400).render("showMessage", templateVars);
   }
   user.id = generateRandomString(6);
@@ -249,4 +265,3 @@ app.post("/logout", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
