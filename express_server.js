@@ -9,6 +9,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  a2b3c4: {
+    id: "a2b3c4",
+    email: "a@a.com",
+    password: "1234",
+  },
+  bv12cd: {
+    id: "bv12cd",
+    email: "b@b.com",
+    password: "4321",
+  },
+};
+
 const generateRandomString = (length) => {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   let result = '';
@@ -35,6 +48,22 @@ const isUserLoggedIn = (cookies) => {
   return false;
 }
 
+// checkPassword -- pass true if needs to check both user and password exist/match, otherwise simple email lookup.
+const userRegistered = (user, checkPassword) => {  
+  for (const userId in users) {
+    const email = users[userId].email;
+    const password = users[userId].password;
+    if (checkPassword) {
+      if (user.password !== password) {
+        continue;
+      } 
+    }
+    if (user.email === email) {
+      return true;
+    }
+  }
+  return false;
+};
 
 // engine specific settings
 app.set("view engine", "ejs"); // define EJS as engine
@@ -46,7 +75,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };  
+  const templateVars = { urls: urlDatabase, users: users };  
   if (req.cookies) {
     templateVars.username = req.cookies["username"];
   }
@@ -119,6 +148,23 @@ app.post("/login", (req, res) => {
     res.cookie("username", req.body.username);
   }
   res.redirect("/urls");
+});
+
+app.post("/register", (req, res) => {
+  const user = {
+    email: req.body.email,
+    password: req.body.password
+  };
+  const templateVars = {};
+  templateVars.username = req.cookies["username"];
+  if (userRegistered(user, false)) {
+    templateVars.message = "User already registered. Please login instead or register new user.";
+    return res.status(400).render("showMessage", templateVars);
+  }
+  user.id = generateRandomString(6);
+  users[id] = user;
+  res.cookie("user_id", user.id);
+  res.redirect("/urls", templateVars);
 });
 
 app.post("/logout", (req, res) => {
