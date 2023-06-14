@@ -35,12 +35,12 @@
               <td><a href='<%= urls[id] %>' target="_blank"><%= urls[id] %></a></td>
               <td>
                 <form method="GET" action="/urls/<%=id%>">
-                  <button type="submit">Edit URL</button>
+                  <button class="btn btn-info" type="submit">Edit URL</button>
                 </form>
               </td>
               <td>
                 <form method="POST" action="/urls/<%=id%>/delete">
-                  <button type="submit">Delete URL</button>
+                  <button class="btn btn-danger" type="submit">Delete URL</button>
                 </form>
             </td>
             </tr>
