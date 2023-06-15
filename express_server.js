@@ -1,11 +1,10 @@
 const { render } = require("ejs");
 const express = require("express");
-// const cookieParser = require('cookie-parser');
 const cookieSession = require("cookie-session");
 const morgan = require('morgan');
-const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
+const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, getUserFromCookie, generatePassword, userIsRegistered, getUserIdFromCredentials } = require("./helpers");
 
 const urlDatabase = {
   "b2xVn2": {
@@ -43,102 +42,102 @@ const users = {
 
 // Internal Functions for the Server
 
-const shortURLCodeExists = (shortURL) => {  
-  return (Object.prototype.hasOwnProperty.call(urlDatabase, shortURL));
-};
+// const shortURLCodeExists = (shortURL) => {  
+//   return (Object.prototype.hasOwnProperty.call(urlDatabase, shortURL));
+// };
 
-const getUrlsByUser = (user) => {
-  const returnObj = {};
-  const userId = user.id;  
-  console.log("passed userId:", userId)
-  if (userId) {
-    for (let shortURLCode in urlDatabase) {      
-      if (urlDatabase[shortURLCode].userId === userId) {
-        returnObj[shortURLCode] = urlDatabase[shortURLCode].longURL;
-      }
-    }
-  }  
-  return returnObj;
-};
+// const getUrlsByUser = (user) => {
+//   const returnObj = {};
+//   const userId = user.id;  
+//   console.log("passed userId:", userId)
+//   if (userId) {
+//     for (let shortURLCode in urlDatabase) {      
+//       if (urlDatabase[shortURLCode].userId === userId) {
+//         returnObj[shortURLCode] = urlDatabase[shortURLCode].longURL;
+//       }
+//     }
+//   }  
+//   return returnObj;
+// };
 
-const userOwnsUrl = (user, shortURLCode) => {
-  const userId = user.id;  
-  console.log("userId:", userId);
-  console.log("shortCode:", shortURLCode);
-  if (Array.prototype.hasOwnProperty.call(urlDatabase, shortURLCode)) {
-    if (urlDatabase[shortURLCode].userId === userId) {
-      return true;
-    }    
-  }
-  return false;
-};
+// const userOwnsUrl = (user, shortURLCode) => {
+//   const userId = user.id;  
+//   console.log("userId:", userId);
+//   console.log("shortCode:", shortURLCode);
+//   if (Array.prototype.hasOwnProperty.call(urlDatabase, shortURLCode)) {
+//     if (urlDatabase[shortURLCode].userId === userId) {
+//       return true;
+//     }    
+//   }
+//   return false;
+// };
 
-const generateRandomString = (length) => {
-  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  let result = '';
+// const generateRandomString = (length) => {
+//   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+//   let result = '';
 
-  for (let i = 0; i < length; i++) {
-    let randomIndex = Math.floor(Math.random() * chars.length);
-    result += chars[randomIndex];
-  }
-  return result;
-};
+//   for (let i = 0; i < length; i++) {
+//     let randomIndex = Math.floor(Math.random() * chars.length);
+//     result += chars[randomIndex];
+//   }
+//   return result;
+// };
 
-const parseLongURL = (longURL) => {
-  let result = longURL.toLowerCase();
-  if (!result.startsWith("http://") && !result.startsWith("https://")) {
-    result = "http://" + result;
-  }
-  return result;
-};
+// const parseLongURL = (longURL) => {
+//   let result = longURL.toLowerCase();
+//   if (!result.startsWith("http://") && !result.startsWith("https://")) {
+//     result = "http://" + result;
+//   }
+//   return result;
+// };
 
-const isUserLoggedIn = (cookies) => {
-  if (cookies["user_id"] && Object.prototype.hasOwnProperty.call(users, cookies["user_id"])) {
-    return true;
-  }
-  return false;
-};
+// const isUserLoggedIn = (cookies) => {
+//   if (cookies["user_id"] && Object.prototype.hasOwnProperty.call(users, cookies["user_id"])) {
+//     return true;
+//   }
+//   return false;
+// };
 
-const getUserFromCookie = (cookieValue) => {
-  for (const user in users) {
-    if (user.id === cookieValue) {
-      return user;
-    }
-  }
-  return null;
-};
+// const getUserFromCookie = (cookieValue) => {
+//   for (const user in users) {
+//     if (user.id === cookieValue) {
+//       return user;
+//     }
+//   }
+//   return null;
+// };
 
-const generatePassword = (userPassword) => {
-  return bcrypt.hashSync(userPassword, 10);
-};
+// const generatePassword = (userPassword) => {
+//   return bcrypt.hashSync(userPassword, 10);
+// };
 
-// checkPassword -- pass true if needs to check both user and password exist/match, otherwise simple email lookup.
-const userIsRegistered = (user, checkPassword) => {  
-  for (const userId in users) {
-    const storedEmail = users[userId].email;
-    const storedPassword = users[userId].password;
-    if (checkPassword) {
-      if (!bcrypt.compareSync(user.password, storedPassword)) { // if it doesnt match, not our user, move on.
-        continue;
-      }
-    }
-    if (user.email === storedEmail) {
-      return true;
-    }
-  }
-  return false;
-};
+// // checkPassword -- pass true if needs to check both user and password exist/match, otherwise simple email lookup.
+// const userIsRegistered = (user, checkPassword) => {  
+//   for (const userId in users) {
+//     const storedEmail = users[userId].email;
+//     const storedPassword = users[userId].password;
+//     if (checkPassword) {
+//       if (!bcrypt.compareSync(user.password, storedPassword)) { // if it doesnt match, not our user, move on.
+//         continue;
+//       }
+//     }
+//     if (user.email === storedEmail) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
-const getUserIdFromCredentials = (email, password) => {
-  for (const userId in users) {
-    const storedEmail = users[userId].email;
-    const storedPassword = users[userId].password;
-    if (storedEmail === email && bcrypt.compareSync(password, storedPassword)) {
-      return users[userId].id;
-    }
-  }
-  return null;
-};
+// const getUserIdFromCredentials = (email, password) => {
+//   for (const userId in users) {
+//     const storedEmail = users[userId].email;
+//     const storedPassword = users[userId].password;
+//     if (storedEmail === email && bcrypt.compareSync(password, storedPassword)) {
+//       return users[userId].id;
+//     }
+//   }
+//   return null;
+// };
 
 // ------------------------
 
@@ -163,11 +162,11 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { user: {} };
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     return res.redirect(401, "/login");
   }
   templateVars.user = users[req.session["user_id"]];
-  templateVars.urls = getUrlsByUser(templateVars.user);
+  templateVars.urls = getUrlsByUser(templateVars.user, urlDatabase);
   console.log(templateVars);
   res.render("urls_index", templateVars);
 });
@@ -176,7 +175,7 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     return res.redirect(401, "/login");
   }
   templateVars.user = users[req.session["user_id"]];
@@ -187,16 +186,16 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     user: {}
   };  
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     return res.redirect(401, "/login");
   }
   templateVars.user = users[req.session["user_id"]];
   
-  if (!shortURLCodeExists(req.params.id)) {
+  if (!shortURLCodeExists(req.params.id, urlDatabase)) {
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);  }
 
-  if (!userOwnsUrl(templateVars.user, req.params.id)) {
+  if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
     templateVars.message = `Access Denied. You do not have access to view/edit ${req.params.id}`
     return res.status(401).render("showMessage", templateVars);
   }
@@ -210,7 +209,7 @@ app.get("/register", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     return res.render("user_register", templateVars);
   }
   res.redirect("/urls");
@@ -220,7 +219,7 @@ app.get("/login", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     return res.render("login", templateVars);
   }
   res.redirect("/urls");
@@ -237,7 +236,7 @@ app.get("/u/:id", (req, res) => {
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
     console.log(`Sending them ...nowhere hopefully.`);
-    if (isUserLoggedIn(req.session)) {
+    if (isUserLoggedIn(req.session, users)) {
       templateVars.user = users[req.session["user_id"]];
     }
     templateVars.message = `Invalid shortCode: ${req.params.id}`;
@@ -251,7 +250,7 @@ app.post("/urls", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     templateVars.message = "Cannot create short URL. User is not logged in.";
     return res.render("showMessage", templateVars);
   }
@@ -273,18 +272,18 @@ app.post("/urls/:id/delete", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     templateVars.message = `Access Denied. You do not have access to delete ${req.params.id}`
     return res.render("showMessage", templateVars);
   }
   templateVars.user = users[req.session["user_id"]];
   console.log(":id/delete route, id:", req.params.id);  
-  if (!shortURLCodeExists(req.params.id)) { // another error
+  if (!shortURLCodeExists(req.params.id, urlDatabase)) { // another error
     console.log("I shouldnt be here...");
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
-  if (!userOwnsUrl(templateVars.user, req.params.id)) { // different error
+  if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) { // different error
     templateVars.message = "Access denied."
     console.log("Access was denid.");
     console.log(templateVars);
@@ -298,16 +297,16 @@ app.post("/urls/:id/update", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session)) {
+  if (!isUserLoggedIn(req.session, users)) {
     templateVars.message = "Cannot update URL. User is not logged in.";
     return res.render("showMessage", templateVars);
   }
   templateVars.user = users[req.session["user_id"]];
-  if (!shortURLCodeExists(req.params.id)) { // another error
+  if (!shortURLCodeExists(req.params.id, urlDatabase)) { // another error
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
-  if (!userOwnsUrl(templateVars.user, req.params.id)) { // different error
+  if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) { // different error
     templateVars.message = `Access Denied. You do not have access to delete ${req.params.id}`
     return res.render("showMessage", templateVars);    
   }
@@ -321,13 +320,12 @@ app.post("/login", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!userIsRegistered({ email: req.body.email, password: req.body.password }, true)) {
+  if (!userIsRegistered({ email: req.body.email, password: req.body.password }, true, users)) {
     templateVars.message = "User and/or Password invalid.";
     return res.status(401).render("showMessage", templateVars);
   }
   if (req.body.email) {
-    //res.cookie("user_id", getUserIdFromCredentials(req.body.email, req.body.password));
-    req.session["user_id"] = getUserIdFromCredentials(req.body.email, req.body.password);
+    req.session["user_id"] = getUserIdFromCredentials(req.body.email, req.body.password, users);
   }
   res.redirect("/urls");
 });
@@ -349,7 +347,7 @@ app.post("/register", (req, res) => {
     return res.status(400).render("showMessage", templateVars);
   }
 
-  if (userIsRegistered(user, false)) {    
+  if (userIsRegistered(user, false, users)) {    
     templateVars.message = "User already registered. Please login instead or register new user.";        
     return res.status(400).render("showMessage", templateVars);
   }
