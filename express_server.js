@@ -1,7 +1,9 @@
 const { render } = require("ejs");
 const express = require("express");
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
+const cookieSession = require("cookie-session");
 const morgan = require('morgan');
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -23,6 +25,8 @@ const urlDatabase = {
     userId: "bv12cd"
    }
 };
+
+
 
 const users = {
   a2b3c4: {
@@ -95,17 +99,30 @@ const isUserLoggedIn = (cookies) => {
   return false;
 };
 
+const getUserFromCookie = (cookieValue) => {
+  for (const user in users) {
+    if (user.id === cookieValue) {
+      return user;
+    }
+  }
+  return null;
+};
+
+const generatePassword = (userPassword) => {
+  return bcrypt.hashSync(userPassword, 10);
+};
+
 // checkPassword -- pass true if needs to check both user and password exist/match, otherwise simple email lookup.
-const userRegistered = (user, checkPassword) => {
+const userIsRegistered = (user, checkPassword) => {  
   for (const userId in users) {
-    const email = users[userId].email;
-    const password = users[userId].password;
+    const storedEmail = users[userId].email;
+    const storedPassword = users[userId].password;
     if (checkPassword) {
-      if (user.password !== password) {
+      if (!bcrypt.compareSync(user.password, storedPassword)) { // if it doesnt match, not our user, move on.
         continue;
       }
     }
-    if (user.email === email) {
+    if (user.email === storedEmail) {
       return true;
     }
   }
@@ -114,9 +131,9 @@ const userRegistered = (user, checkPassword) => {
 
 const getUserIdFromCredentials = (email, password) => {
   for (const userId in users) {
-    const _email = users[userId].email;
-    const _password = users[userId].password;
-    if (_email === email && _password === password) {
+    const storedEmail = users[userId].email;
+    const storedPassword = users[userId].password;
+    if (storedEmail === email && bcrypt.compareSync(password, storedPassword)) {
       return users[userId].id;
     }
   }
@@ -125,11 +142,16 @@ const getUserIdFromCredentials = (email, password) => {
 
 // ------------------------
 
-// engine specific settings
+// engine specific settings | MIDDLEWARE
 app.set("view engine", "ejs"); // define EJS as engine
 app.use(express.urlencoded({ extended: true })); // make buffer readable.
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(morgan('dev'));
+app.use(cookieSession({
+  name: 'session',
+  keys: ["someReallyWrongAndSuperSecretSecretForSure", "AndYetAnothersUpErDuPerSecretSecret", "AndWhatDoYouKnowItsYetAnotherSuPeRduperSecretForrealsSecret!"],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours.
+}));
 
 // -----------------------
 
@@ -141,10 +163,10 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { user: {} };
-  if (!isUserLoggedIn(req.cookies)) {
-    return res.redirect("/login");
+  if (!isUserLoggedIn(req.session)) {
+    return res.redirect(401, "/login");
   }
-  templateVars.user = users[req.cookies["user_id"]];
+  templateVars.user = users[req.session["user_id"]];
   templateVars.urls = getUrlsByUser(templateVars.user);
   console.log(templateVars);
   res.render("urls_index", templateVars);
@@ -154,10 +176,10 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.cookies)) {
-    return res.redirect("/login");
+  if (!isUserLoggedIn(req.session)) {
+    return res.redirect(401, "/login");
   }
-  templateVars.user = users[req.cookies["user_id"]];
+  templateVars.user = users[req.session["user_id"]];
   res.render("urls_new", templateVars);
 });
 
@@ -165,10 +187,10 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     user: {}
   };  
-  if (!isUserLoggedIn(req.cookies)) {
-    return res.redirect("/login");
+  if (!isUserLoggedIn(req.session)) {
+    return res.redirect(401, "/login");
   }
-  templateVars.user = users[req.cookies["user_id"]];
+  templateVars.user = users[req.session["user_id"]];
   
   if (!shortURLCodeExists(req.params.id)) {
     templateVars.message = `Invalid ShortCode`;
@@ -188,7 +210,7 @@ app.get("/register", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.cookies)) {
+  if (!isUserLoggedIn(req.session)) {
     return res.render("user_register", templateVars);
   }
   res.redirect("/urls");
@@ -198,7 +220,7 @@ app.get("/login", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.cookies)) {
+  if (!isUserLoggedIn(req.session)) {
     return res.render("login", templateVars);
   }
   res.redirect("/urls");
@@ -215,8 +237,8 @@ app.get("/u/:id", (req, res) => {
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
     console.log(`Sending them ...nowhere hopefully.`);
-    if (isUserLoggedIn(req.cookies)) {
-      templateVars.user = users[req.cookies["user_id"]];
+    if (isUserLoggedIn(req.session)) {
+      templateVars.user = users[req.session["user_id"]];
     }
     templateVars.message = `Invalid shortCode: ${req.params.id}`;
     res.status(404).render("showMessage", templateVars)    
@@ -229,11 +251,11 @@ app.post("/urls", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.cookies)) {
+  if (!isUserLoggedIn(req.session)) {
     templateVars.message = "Cannot create short URL. User is not logged in.";
     return res.render("showMessage", templateVars);
   }
-  templateVars.user = users[req.cookies["user_id"]];
+  templateVars.user = users[req.session["user_id"]];
   if (!req.body.longURL) {
     templateVars.message = "The URL cannot be empty.";
     return res.status(400).render("showMessage", templateVars);
@@ -251,11 +273,11 @@ app.post("/urls/:id/delete", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.cookies)) {
+  if (!isUserLoggedIn(req.session)) {
     templateVars.message = `Access Denied. You do not have access to delete ${req.params.id}`
     return res.render("showMessage", templateVars);
   }
-  templateVars.user = users[req.cookies["user_id"]];
+  templateVars.user = users[req.session["user_id"]];
   console.log(":id/delete route, id:", req.params.id);  
   if (!shortURLCodeExists(req.params.id)) { // another error
     console.log("I shouldnt be here...");
@@ -276,11 +298,11 @@ app.post("/urls/:id/update", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.cookies)) {
+  if (!isUserLoggedIn(req.session)) {
     templateVars.message = "Cannot update URL. User is not logged in.";
     return res.render("showMessage", templateVars);
   }
-  templateVars.user = users[req.cookies["user_id"]];
+  templateVars.user = users[req.session["user_id"]];
   if (!shortURLCodeExists(req.params.id)) { // another error
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
@@ -299,12 +321,13 @@ app.post("/login", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!userRegistered({ email: req.body.email, password: req.body.password }, true)) {
+  if (!userIsRegistered({ email: req.body.email, password: req.body.password }, true)) {
     templateVars.message = "User and/or Password invalid.";
-    return res.status(403).render("showMessage", templateVars);
+    return res.status(401).render("showMessage", templateVars);
   }
   if (req.body.email) {
-    res.cookie("user_id", getUserIdFromCredentials(req.body.email, req.body.password));
+    //res.cookie("user_id", getUserIdFromCredentials(req.body.email, req.body.password));
+    req.session["user_id"] = getUserIdFromCredentials(req.body.email, req.body.password);
   }
   res.redirect("/urls");
 });
@@ -325,20 +348,26 @@ app.post("/register", (req, res) => {
     templateVars.message = "Please make sure to input both an email AND password.";
     return res.status(400).render("showMessage", templateVars);
   }
-  // templateVars.username = req.cookies["username"];
-  if (userRegistered(user, false)) {    
+
+  if (userIsRegistered(user, false)) {    
     templateVars.message = "User already registered. Please login instead or register new user.";        
     return res.status(400).render("showMessage", templateVars);
   }
+
   user.id = generateRandomString(6);
+  user.password = generatePassword(user.password);
   users[user.id] = user;
+  
   templateVars.user = user;
-  res.cookie("user_id", user.id);
+  //res.cookie("user_id", user.id);
+  req.session["user_id"] = user.id;
   res.redirect("/urls");
+  console.log(users);
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  //res.clearCookie("user_id");
+  req.session = null; // clear cookies.
   res.redirect("/login");
 });
 
