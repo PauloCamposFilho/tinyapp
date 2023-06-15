@@ -357,14 +357,12 @@ app.post("/register", (req, res) => {
   users[user.id] = user;
   
   templateVars.user = user;
-  //res.cookie("user_id", user.id);
   req.session["user_id"] = user.id;
   res.redirect("/urls");
   console.log(users);
 });
 
 app.post("/logout", (req, res) => {
-  //res.clearCookie("user_id");
   req.session = null; // clear cookies.
   res.redirect("/login");
 });

@@ -39,6 +39,9 @@ const generateRandomString = (length) => {
 };
 
 const parseLongURL = (longURL) => {
+  if (!longURL || typeof longURL !== 'string') {
+    return null;
+  }
   let result = longURL.toLowerCase();
   if (!result.startsWith("http://") && !result.startsWith("https://")) {
     result = "http://" + result;
@@ -54,9 +57,9 @@ const isUserLoggedIn = (cookies, users) => {
 };
 
 const getUserFromCookie = (cookieValue, users) => {
-  for (const user in users) {
-    if (user.id === cookieValue) {
-      return user;
+  for (const userKey in users) {
+    if (users[userKey].id === cookieValue) {
+      return users[userKey];
     }
   }
   return null;
@@ -77,10 +80,10 @@ const userIsRegistered = (user, checkPassword, users) => {
       }
     }
     if (user.email === storedEmail) {
-      return true;
+      return { id: userId, email: storedEmail, password: '' };
     }
   }
-  return false;
+  return;
 };
 
 const getUserIdFromCredentials = (email, password, users) => {
