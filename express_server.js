@@ -111,7 +111,7 @@ app.get("/urls/:id", (req, res) => {
   templateVars.user = users[req.session["user_id"]];
 
   if (!isUserLoggedIn(req.session, users)) {
-    return res.status(401).redirect("login");
+    return res.status(401).redirect("/login");
   }
   
   if (!shortURLCodeExists(shortURLCode, urlDatabase)) {
@@ -156,13 +156,13 @@ app.get("/u/:id", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]]; // in case we are going to show a 404 due to invalid/nonexistent shortcode, keep user context so the header renders properly.
   const longURL = urlDatabase[req.params.id];
-  if (longURL) {
-    urlDatabase[req.params.id].numberOfUses += 1;
-    urlDatabase[req.params.id].visits.push(new Date());
+  if (longURL) {    
     if (!req.session[req.params.id]) { // you've never been here before... unique visitor!
       urlDatabase[req.params.id].uniqueVisitors += 1;      
-      req.session[req.params.id] = true; // tag user with a cookie so that we can recognize them if they re-use the shortURL.
+      req.session[req.params.id] = generateRandomString(6); // tag user with a cookie so that we can recognize them if they re-use the shortURL, and also use as a visitor_id
     }
+    urlDatabase[req.params.id].numberOfUses += 1;
+    urlDatabase[req.params.id].visits.push([new Date(), req.session[req.params.id]]);
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
     templateVars.message = `Invalid shortCode: ${req.params.id}`;

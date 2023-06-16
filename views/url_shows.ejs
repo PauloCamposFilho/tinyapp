@@ -33,7 +33,7 @@
         <p>Here is the history of uses of this shortURL</p>
         <ul style="list-style-type: none;">
           <% for (const visit of url.visits) { %>
-            <li><%= visit.toString() %></li>
+            <li><%= visit[0].toString() %> - visitor_id: <%= visit[1] %></li>
           <% } %>
         </ul>        
       <% } %>
