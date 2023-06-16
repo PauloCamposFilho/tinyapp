@@ -98,9 +98,7 @@ describe("#shortURLCodeExists", () => {
 
 describe("#getUrlsByUser", () =>{
   it("should return an object with all owned urls", () => {
-    const userURLs = getUrlsByUser({ id: "a2b3c4" }, urlDatabase);
-    console.log("userURLS:", userURLs);
-    console.log("ownedURLS:", userOwnedURLs);
+    const userURLs = getUrlsByUser({ id: "a2b3c4" }, urlDatabase);    
     assert.deepEqual(userURLs, userOwnedURLs);
   });
   it("should return an empty object if user doesnt own any urls", () => {
