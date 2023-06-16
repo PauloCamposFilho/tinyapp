@@ -2,6 +2,7 @@
 const express = require("express");
 const cookieSession = require("cookie-session");
 const morgan = require('morgan');
+const methodOverride = require("method-override");
 const app = express();
 const PORT = 8080; // default port 8080
 const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, generatePassword, userIsRegistered } = require("./helpers");
@@ -56,6 +57,7 @@ app.use(cookieSession({
   keys: ["someReallyWrongAndSuperSecretSecretForSure", "AndYetAnothersUpErDuPerSecretSecret", "AndWhatDoYouKnowItsYetAnotherSuPeRduperSecretForrealsSecret!"],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours.
 }));
+app.use(methodOverride("_method"));
 
 // -----------------------
 
@@ -185,7 +187,7 @@ app.post("/urls", (req, res) => {
 // route to post a delete requisition, removing a shortURL from the database.
 // verifies that the shortURL exists, the user is logged in, and that they have the relevant permission/access-level for it.
 // displays relevant errors in fail cases.
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id/delete", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
 
@@ -207,7 +209,7 @@ app.post("/urls/:id/delete", (req, res) => {
 // route to post an update requisition, editing the shortURL in the database.
 // verifies that the shortURL exists, the user is logged in, and that they have the relevant permission/access-level for it.
 // in case that a shortURL tries to be updated with a null/undefined/empty value, it will not update the value and will just redirect to the main route (/)
-app.post("/urls/:id/update", (req, res) => {
+app.put("/urls/:id/update", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
 
