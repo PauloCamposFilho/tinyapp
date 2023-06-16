@@ -11,15 +11,24 @@ const getUrlsByUser = (user, urlDatabase) => {
   if (userId) {
     for (let shortURLCode in urlDatabase) {
       if (urlDatabase[shortURLCode].userId === userId) {
-        returnObj[shortURLCode] = {
-          longURL: urlDatabase[shortURLCode].longURL,
-          creationDate: urlDatabase[shortURLCode].creationDate,
-          numberOfUses: urlDatabase[shortURLCode].numberOfUses
-        };
+        returnObj[shortURLCode] = urlDatabase[shortURLCode];
+        returnObj[shortURLCode].id = shortURLCode;
+        returnObj[shortURLCode].userId; //redundant.
       }
     }
   }
   return returnObj;
+};
+
+// returns an obj containing the url data from the dabatase.
+const getUrlObj = (shortURLCode, urlDatabase) => {
+  let objReturn = {};
+  if (!shortURLCodeExists(shortURLCode, urlDatabase)) {
+    return null;
+  }
+  objReturn = urlDatabase[shortURLCode];
+  objReturn.id = shortURLCode;
+  return objReturn;
 };
 
 // returns true | false on whether a given shortURL is owned by the user. Permission-related.
@@ -72,7 +81,7 @@ const generatePassword = (userPassword) => {
 
 // returns a user object if the user is registered/exists in the database.
 // checkPassword -- pass "true" if needs to check both user and password exist/match, "false" will otherwise be a simple email lookup.
-const userIsRegistered = (user, checkPassword, users) => {  
+const userIsRegistered = (user, checkPassword, users) => {
   for (const userId in users) {
     const storedEmail = users[userId].email;
     const storedPassword = users[userId].password;
@@ -110,4 +119,4 @@ const getUserFromCookie = (cookieValue, users) => {
   return null;
 };
 
-module.exports = { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, getUserFromCookie, generatePassword, userIsRegistered, getUserIdFromCredentials };
+module.exports = { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, getUserFromCookie, generatePassword, userIsRegistered, getUserIdFromCredentials, getUrlObj };

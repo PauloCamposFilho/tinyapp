@@ -16,15 +16,27 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <%= url.longURL %></h5>
         <p class="card-text">
-          Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+          Short URL ID: <a href="/u/<%= url.id %>"><%= url.id %></a>
         </p>
-        <form method="POST" action="/urls/<%=id%>/update?_method=PUT">
+        <form method="POST" action="/urls/<%=url.id%>/update?_method=PUT">
           <input type="text" name="longURL" style="min-width: 200px;" placeholder="New Redirect URL (http://)">
           <button class="btn btn-primary" type="submit">Save</button>
         </form>
       </div>
+      <p class="card-text">
+        <span>This shortURL has been used <strong><%= url.numberOfUses %></strong> times</span><br/>
+        <span>This shortURL has had <strong><%= url.uniqueVisitors %></strong> unique visitors.</span>
+      </p>
+      <% if (url.visits.length > 0) { %>
+        <p>Here is the history of uses of this shortURL</p>
+        <ul style="list-style-type: none;">
+          <% for (const visit of url.visits) { %>
+            <li><%= visit.toString() %></li>
+          <% } %>
+        </ul>        
+      <% } %>
       <div class="card-footer text-muted"></div>
     </div>
     <!-- Bootstrap JS -->

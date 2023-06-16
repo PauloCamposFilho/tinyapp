@@ -5,32 +5,41 @@ const morgan = require('morgan');
 const methodOverride = require("method-override");
 const app = express();
 const PORT = 8080; // default port 8080
-const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, generatePassword, userIsRegistered } = require("./helpers");
+const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, generatePassword, userIsRegistered, getUrlObj } = require("./helpers");
 
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
     userId: "a2b3c4",
     creationDate: new Date(),
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
     userId: "a2b3c4",
     creationDate: new Date(),
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   },
   "v9smk3": {
     longURL: "http://www.yahoo.com",
     userId: "bv12cd",
     creationDate: new Date(),
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
+
   },
   "vh8sdx": {
     longURL: "http://www.example.com",
     userId: "bv12cd",
     creationDate: new Date(),
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   }
 };
 
@@ -98,23 +107,26 @@ app.get("/urls/new", (req, res) => {
 // redirects appropriately or displays error message.
 app.get("/urls/:id", (req, res) => {
   const templateVars = { user: {} };
+  const shortURLCode = req.params.id;
   templateVars.user = users[req.session["user_id"]];
+
   if (!isUserLoggedIn(req.session, users)) {
     return res.status(401).redirect("login");
   }
   
-  if (!shortURLCodeExists(req.params.id, urlDatabase)) {
+  if (!shortURLCodeExists(shortURLCode, urlDatabase)) {
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
   
-  if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
-    templateVars.message = `Access Denied. You do not have access to view/edit ${req.params.id}`;
+  if (!userOwnsUrl(templateVars.user, shortURLCode, urlDatabase)) {
+    templateVars.message = `Access Denied. You do not have access to view/edit ${shortURLCode}`;
     return res.status(401).render("showMessage", templateVars);
   }
+  templateVars.url = getUrlObj(shortURLCode, urlDatabase);
+
+  console.log(templateVars.url);
   
-  templateVars.id = req.params.id;
-  templateVars.longURL = urlDatabase[templateVars.id].longURL;
   res.render("url_shows", templateVars);
 });
 
@@ -146,6 +158,11 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   if (longURL) {
     urlDatabase[req.params.id].numberOfUses += 1;
+    urlDatabase[req.params.id].visits.push(new Date());
+    if (!req.session[req.params.id]) { // you've never been here before... unique visitor!
+      urlDatabase[req.params.id].uniqueVisitors += 1;      
+      req.session[req.params.id] = true; // tag user with a cookie so that we can recognize them if they re-use the shortURL.
+    }
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
     templateVars.message = `Invalid shortCode: ${req.params.id}`;
@@ -177,7 +194,9 @@ app.post("/urls", (req, res) => {
     longURL: parseLongURL(req.body.longURL),
     userId: templateVars.user.id,
     creationDate: new Date(),
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   };
 
   urlDatabase[shortURL] = newLink;
@@ -277,7 +296,8 @@ app.post("/register", (req, res) => {
 // route to post the logout action
 // clears cookies and redirects user.
 app.post("/logout", (req, res) => {
-  req.session = null; // clear cookies.
+  //req.session = null; // clear cookies.
+  req.session["user_id"] = null; // only clear the login cookie. Keep the unique visitor tracking.
   res.redirect("/login");
 });
 

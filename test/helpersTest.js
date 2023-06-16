@@ -1,6 +1,6 @@
 const { assert } = require("chai");
 const bcrypt = require("bcryptjs");
-const { getUserIdFromCredentials, userIsRegistered, shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, getUserFromCookie } = require("../helpers");
+const { getUserIdFromCredentials, userIsRegistered, shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, getUserFromCookie, getUrlObj } = require("../helpers");
 
 //test setup
 
@@ -22,39 +22,65 @@ const urlDatabase = {
     longURL: "http://www.lighthouselabs.ca",
     userId: "a2b3c4",
     creationDate: theDate,
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
     userId: "a2b3c4",
     creationDate: theDate,
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   },
   "v9smk3": {
     longURL: "http://www.yahoo.com",
     userId: "bv12cd",
     creationDate: theDate,
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   },
   "vh8sdx": {
     longURL: "http://www.example.com",
     userId: "bv12cd",
     creationDate: theDate,
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   }
 };
 
 const userOwnedURLs = {
   "b2xVn2": {
+    userId: "a2b3c4",
+    id: "b2xVn2",
     longURL: "http://www.lighthouselabs.ca",
     creationDate: theDate,
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   },
   "9sm5xK": {
+    userId: "a2b3c4",
+    id: "9sm5xK",
     longURL: "http://www.google.com",
     creationDate: theDate,
-    numberOfUses: 0
+    numberOfUses: 0,
+    uniqueVisitors: 0,
+    visits: []
   }
+};
+
+const getUrlTestObj = { 
+  id: "b2xVn2",
+  longURL: "http://www.lighthouselabs.ca",
+  userId: "a2b3c4",
+  creationDate: theDate,
+  numberOfUses: 0,
+  uniqueVisitors: 0,
+  visits: []
 };
 
 // -----------------
@@ -231,5 +257,14 @@ describe("#getUserIdFromCredentials", () => {
     const userEmail = "d@d.com";
     const userPasswordPlainText = "efgh";
     assert.isNull(getUserIdFromCredentials(userEmail, userPasswordPlainText));
+  });
+});
+
+describe("#getUrlObj", () => {
+  it("should return an object with the information from the database if the code given exists", () => {
+    assert.deepEqual(getUrlObj("b2xVn2", urlDatabase), getUrlTestObj);
+  });
+  it("should return null if the url doesnt exist.", () => {
+    assert.isNull(getUrlObj("idontexist", urlDatabase));
   });
 });
