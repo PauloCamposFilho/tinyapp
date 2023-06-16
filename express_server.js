@@ -108,12 +108,12 @@ app.get("/u/:id", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]]; // in case we are going to show a 404 due to invalid/nonexistent shortcode, keep user context so the header renders properly.
   const longURL = urlDatabase[req.params.id];
-  if (!longURL) {    
+  if (!longURL) {
     templateVars.message = `Invalid shortCode: ${req.params.id}`;
-    return res.status(404).render("showMessage", templateVars);  
-  } 
+    return res.status(404).render("showMessage", templateVars);
+  }
   if (!req.session[req.params.id]) { // you've never been here before... unique visitor!
-    urlDatabase[req.params.id].uniqueVisitors += 1;      
+    urlDatabase[req.params.id].uniqueVisitors += 1;
     req.session[req.params.id] = generateRandomString(6); // tag user with a cookie so that we can recognize them if they re-use the shortURL, and also use as a visitor_id
   }
   urlDatabase[req.params.id].numberOfUses += 1;
@@ -209,8 +209,8 @@ app.post("/login", (req, res) => {
   if (!userInformation) {
     templateVars.message = "User and/or Password invalid.";
     return res.status(403).render("showMessage", templateVars);
-  }  
-  req.session["user_id"] = userInformation.id;  
+  }
+  req.session["user_id"] = userInformation.id;
   res.redirect("/urls");
 });
 

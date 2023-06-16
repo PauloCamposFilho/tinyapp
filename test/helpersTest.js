@@ -77,7 +77,7 @@ const userOwnedURLs = {
   }
 };
 
-const getUrlTestObj = { 
+const getUrlTestObj = {
   id: "b2xVn2",
   longURL: "http://www.lighthouselabs.ca",
   userId: "a2b3c4",
@@ -102,7 +102,7 @@ describe("#shortURLCodeExists", () => {
 
 describe("#getUrlsByUser", () =>{
   it("should return an object with all owned urls", () => {
-    const userURLs = getUrlsByUser({ id: "a2b3c4" }, urlDatabase);    
+    const userURLs = getUrlsByUser({ id: "a2b3c4" }, urlDatabase);
     assert.deepEqual(userURLs, userOwnedURLs);
   });
   it("should return an empty object if user doesnt own any urls", () => {
