@@ -47,6 +47,7 @@ const users = {
 };
 
 // engine specific settings | MIDDLEWARE
+
 app.set("view engine", "ejs"); // define EJS as engine
 app.use(express.urlencoded({ extended: true })); // make buffer readable.
 app.use(morgan('dev')); // print every http request to console.
@@ -74,26 +75,20 @@ app.get("/urls", (req, res) => {
     return res.status(401).redirect("/login");
   }
   templateVars.urls = getUrlsByUser(templateVars.user, urlDatabase);
-  console.log(templateVars);
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
   if (!isUserLoggedIn(req.session, users)) {
     return res.status(401).redirect("/login");
   }
-    
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
   if (!isUserLoggedIn(req.session, users)) {
     return res.status(401).redirect("login");
@@ -103,21 +98,19 @@ app.get("/urls/:id", (req, res) => {
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
-
+  
   if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
     templateVars.message = `Access Denied. You do not have access to view/edit ${req.params.id}`;
     return res.status(401).render("showMessage", templateVars);
   }
+  
   templateVars.id = req.params.id;
   templateVars.longURL = urlDatabase[templateVars.id].longURL;
-  
   res.render("url_shows", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = { user: {} };
   if (!isUserLoggedIn(req.session, users)) {
     return res.render("user_register", templateVars);
   }
@@ -125,22 +118,18 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = { user: {} };
   if (!isUserLoggedIn(req.session, users)) {
     return res.render("login", templateVars);
   }
   res.redirect("/urls");
 });
 
-//  handle shortURL redirects
 app.get("/u/:id", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
-  templateVars.user = users[req.session["user_id"]];
-  if (Object.prototype.hasOwnProperty.call(urlDatabase, req.params.id)) {
+  const templateVars = { user: {} };
+  templateVars.user = users[req.session["user_id"]]; // in case we are going to show a 404 due to invalid/nonexistent shortcode, keep user context so the header renders properly.
+  const longURL = urlDatabase[req.params.id];
+  if (longURL) {
     urlDatabase[req.params.id].numberOfUses += 1;
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
@@ -149,19 +138,22 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//  handle post requests
+//  ROUTING (POST)
 
 app.post("/urls", (req, res) => {
-  const templateVars = {};
+  const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
+
   if (!isUserLoggedIn(req.session, users)) {
     templateVars.message = "Cannot create short URL. User is not logged in.";
-    return res.render("showMessage", templateVars);
+    return res.status(401).render("showMessage", templateVars);
   }
+  
   if (!req.body.longURL) {
     templateVars.message = "The URL cannot be empty.";
     return res.status(400).render("showMessage", templateVars);
   }
+
   const shortURL = generateRandomString(6);
   const newLink = {
     longURL: parseLongURL(req.body.longURL),
@@ -169,20 +161,21 @@ app.post("/urls", (req, res) => {
     creationDate: new Date(),
     numberOfUses: 0
   };
+
   urlDatabase[shortURL] = newLink;
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
-  if (!shortURLCodeExists(req.params.id, urlDatabase)) { // another error
+
+  if (!shortURLCodeExists(req.params.id, urlDatabase)) {
     console.log("I shouldnt be here...");
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
+
   if (!isUserLoggedIn(req.session, users) || !userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
     templateVars.message = `Access Denied. You do not have access to delete ${req.params.id}`;
     return res.status(401).render("showMessage", templateVars);
@@ -193,14 +186,14 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
-  if (!shortURLCodeExists(req.params.id, urlDatabase)) { // another error
+
+  if (!shortURLCodeExists(req.params.id, urlDatabase)) {
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
+
   if (!isUserLoggedIn(req.session, users) || !userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
     templateVars.message = `Access Denied. You do not have access to update ${req.params.id}`;
     return res.status(401).render("showMessage", templateVars);
@@ -213,9 +206,7 @@ app.post("/urls/:id/update", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = { user: {} };
   if (!userIsRegistered({ email: req.body.email, password: req.body.password }, true, users)) {
     templateVars.message = "User and/or Password invalid.";
     return res.status(403).render("showMessage", templateVars);
@@ -227,10 +218,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
-
+  const templateVars = { user: {} };
   const user = {
     email: req.body.email,
     password: req.body.password
@@ -249,9 +237,9 @@ app.post("/register", (req, res) => {
   user.id = generateRandomString(6);
   user.password = generatePassword(user.password);
   users[user.id] = user;
-  
   templateVars.user = user;
   req.session["user_id"] = user.id;
+
   res.redirect("/urls");
 });
 
