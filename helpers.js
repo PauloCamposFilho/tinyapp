@@ -88,7 +88,7 @@ const userIsRegistered = (user, checkPassword, users) => {
   return;
 };
 
-// simplified lookup that will return just the userId given valid credentials.
+// simplified lookup that will return just the userId given valid credentials. Deprecated, not in use.
 const getUserIdFromCredentials = (email, password, users) => {
   for (const userId in users) {
     const storedEmail = users[userId].email;

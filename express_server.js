@@ -4,7 +4,7 @@ const cookieSession = require("cookie-session");
 const morgan = require('morgan');
 const app = express();
 const PORT = 8080; // default port 8080
-const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, generatePassword, userIsRegistered, getUserIdFromCredentials } = require("./helpers");
+const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, generatePassword, userIsRegistered } = require("./helpers");
 
 const urlDatabase = {
   "b2xVn2": {
@@ -33,9 +33,9 @@ const urlDatabase = {
   }
 };
 
-const users = {
-  a2b3c4: {
-    id: "a2b3c4",
+const users = {           // These initial users are not really used anymore. Their passwords are plaintext (and will not work)
+  a2b3c4: {               // and they are kept simply as a means to show the overall object structure and to own a
+    id: "a2b3c4",         // couple of shortURLs each for permission test cases (attempting to delete/update) their shortURLs.
     email: "a@a.com",
     password: "1234",
   },
@@ -46,11 +46,11 @@ const users = {
   },
 };
 
-// engine specific settings | MIDDLEWARE
+// engine specific settings | Middleware
 
-app.set("view engine", "ejs"); // define EJS as engine
+app.set("view engine", "ejs");                   // define EJS as engine
 app.use(express.urlencoded({ extended: true })); // make buffer readable.
-app.use(morgan('dev')); // print every http request to console.
+app.use(morgan('dev'));                          // print every http request to console.
 app.use(cookieSession({
   name: 'session',
   keys: ["someReallyWrongAndSuperSecretSecretForSure", "AndYetAnothersUpErDuPerSecretSecret", "AndWhatDoYouKnowItsYetAnotherSuPeRduperSecretForrealsSecret!"],
@@ -61,6 +61,7 @@ app.use(cookieSession({
 
 // Routing (GET)
 
+// default route. checks if user is logged in and redirects accordingly if necessary.
 app.get("/", (req, res) => {
   if (!isUserLoggedIn(req.session, users)) {
     return res.redirect("/login");
@@ -68,6 +69,8 @@ app.get("/", (req, res) => {
   res.redirect("/urls");
 });
 
+// "main" route where all URLs belonging to the logged in user are displayed.
+// checks to see if the user is logged in, and if not, redirects to login page.
 app.get("/urls", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
@@ -78,6 +81,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// route to get the form for a new shortURL creation. Redirects if user is not logged in.
 app.get("/urls/new", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
@@ -87,6 +91,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+// route to get information about a given shortCode (comes in as the "id" parameter). Also used for editing it.
+// verifies that the user is logged in, that the shortcode exists, and that the logged in user owns/has permission to edit it.
+// redirects appropriately or displays error message.
 app.get("/urls/:id", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
@@ -109,6 +116,8 @@ app.get("/urls/:id", (req, res) => {
   res.render("url_shows", templateVars);
 });
 
+// route to get the registration form for the service.
+// redirects to GET /urls if user is already logged in.
 app.get("/register", (req, res) => {
   const templateVars = { user: {} };
   if (!isUserLoggedIn(req.session, users)) {
@@ -117,6 +126,8 @@ app.get("/register", (req, res) => {
   res.redirect("/urls");
 });
 
+// route to get the login form for the service.
+// redirects to GET /urls if user is already logged in.
 app.get("/login", (req, res) => {
   const templateVars = { user: {} };
   if (!isUserLoggedIn(req.session, users)) {
@@ -125,6 +136,8 @@ app.get("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+// route used to redirect the user to the actual URL, when given a shortcode (the "id" parameter)
+// displays a 404 error message if the code does not exist.
 app.get("/u/:id", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]]; // in case we are going to show a 404 due to invalid/nonexistent shortcode, keep user context so the header renders properly.
@@ -140,6 +153,9 @@ app.get("/u/:id", (req, res) => {
 
 //  ROUTING (POST)
 
+// route to post a new shortURL into the database.
+// verifies that the user is logged in, and that a URL was given.
+// displays a relevant error message in fail case.
 app.post("/urls", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
@@ -166,6 +182,9 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+// route to post a delete requisition, removing a shortURL from the database.
+// verifies that the shortURL exists, the user is logged in, and that they have the relevant permission/access-level for it.
+// displays relevant errors in fail cases.
 app.post("/urls/:id/delete", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
@@ -185,6 +204,9 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+// route to post an update requisition, editing the shortURL in the database.
+// verifies that the shortURL exists, the user is logged in, and that they have the relevant permission/access-level for it.
+// in case that a shortURL tries to be updated with a null/undefined/empty value, it will not update the value and will just redirect to the main route (/)
 app.post("/urls/:id/update", (req, res) => {
   const templateVars = { user: {} };
   templateVars.user = users[req.session["user_id"]];
@@ -205,18 +227,25 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect("/");
 });
 
+// route to post the login form information.
+// verifies that the user is registered (compares both email and password) through the return from userIsRegistered function
+// displays relevant error message if the credentials are invalid.
 app.post("/login", (req, res) => {
   const templateVars = { user: {} };
-  if (!userIsRegistered({ email: req.body.email, password: req.body.password }, true, users)) {
+  const userInformation = userIsRegistered({ email: req.body.email, password: req.body.password }, true, users);
+  if (!userInformation) {
     templateVars.message = "User and/or Password invalid.";
     return res.status(403).render("showMessage", templateVars);
   }
   if (req.body.email) {
-    req.session["user_id"] = getUserIdFromCredentials(req.body.email, req.body.password, users);
+    req.session["user_id"] = userInformation.id;
   }
   res.redirect("/urls");
 });
 
+// route to post the registration form.
+// verifies that the form input is complete, and that a user with the same email does not yet exist.
+// displays relevant error message in fail cases.
 app.post("/register", (req, res) => {
   const templateVars = { user: {} };
   const user = {
@@ -243,11 +272,14 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
+// route to post the logout action
+// clears cookies and redirects user.
 app.post("/logout", (req, res) => {
   req.session = null; // clear cookies.
   res.redirect("/login");
 });
 
+// initialization.
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
