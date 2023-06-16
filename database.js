@@ -1,5 +1,6 @@
 const urlDatabase = {
   "b2xVn2": {
+    id: "b2xVn2",
     longURL: "http://www.lighthouselabs.ca",
     userId: "a2b3c4",
     creationDate: new Date(),
@@ -8,6 +9,7 @@ const urlDatabase = {
     visits: []
   },
   "9sm5xK": {
+    id: "9sm5xK",
     longURL: "http://www.google.com",
     userId: "a2b3c4",
     creationDate: new Date(),
@@ -16,6 +18,7 @@ const urlDatabase = {
     visits: []
   },
   "v9smk3": {
+    id: "v9smk3",
     longURL: "http://www.yahoo.com",
     userId: "bv12cd",
     creationDate: new Date(),
@@ -25,6 +28,7 @@ const urlDatabase = {
 
   },
   "vh8sdx": {
+    id: "vh8sdx",
     longURL: "http://www.example.com",
     userId: "bv12cd",
     creationDate: new Date(),

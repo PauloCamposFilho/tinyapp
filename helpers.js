@@ -13,8 +13,6 @@ const getUrlsByUser = (user, urlDatabase) => {
     for (let shortURLCode in urlDatabase) {
       if (urlDatabase[shortURLCode].userId === userId) {
         returnObj[shortURLCode] = urlDatabase[shortURLCode];
-        returnObj[shortURLCode].id = shortURLCode;
-        returnObj[shortURLCode].userId; //redundant.
       }
     }
   }
@@ -28,7 +26,6 @@ const getUrlObj = (shortURLCode, urlDatabase) => {
     return null;
   }
   objReturn = urlDatabase[shortURLCode];
-  objReturn.id = shortURLCode;
   return objReturn;
 };
 

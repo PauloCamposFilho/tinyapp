@@ -143,6 +143,7 @@ app.post("/urls", (req, res) => {
 
   const shortURL = generateRandomString(6);
   const newLink = {
+    id: shortURL,
     longURL: parseLongURL(req.body.longURL),
     userId: templateVars.user.id,
     creationDate: new Date(),
@@ -209,10 +210,8 @@ app.post("/login", (req, res) => {
   if (!userInformation) {
     templateVars.message = "User and/or Password invalid.";
     return res.status(403).render("showMessage", templateVars);
-  }
-  if (req.body.email) {
-    req.session["user_id"] = userInformation.id;
-  }
+  }  
+  req.session["user_id"] = userInformation.id;  
   res.redirect("/urls");
 });
 
