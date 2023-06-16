@@ -25,6 +25,8 @@
           <tr>
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
+            <th>Created at</th>
+            <th>Times used</th>
             <th colspan="2"></th>
           </tr>
         </thead>
@@ -32,7 +34,9 @@
           <% for (let id in urls) { %>
             <tr>
               <td><a href="/u/<%= id %>" target="_blank"><%= id %></a></td>
-              <td><a href='<%= urls[id] %>' target="_blank"><%= urls[id] %></a></td>
+              <td><a href='<%= urls[id].longURL %>' target="_blank"><%= urls[id].longURL %></a></td>
+              <td><%= urls[id].creationDate.toString() %></td>
+              <td><%= urls[id].numberOfUses %></td>
               <td>
                 <form method="GET" action="/urls/<%=id%>">
                   <button class="btn btn-info" type="submit">Edit URL</button>

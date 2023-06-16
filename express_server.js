@@ -1,31 +1,37 @@
-const { render } = require("ejs");
+// const { render } = require("ejs");
 const express = require("express");
 const cookieSession = require("cookie-session");
 const morgan = require('morgan');
 const app = express();
 const PORT = 8080; // default port 8080
-const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, getUserFromCookie, generatePassword, userIsRegistered, getUserIdFromCredentials } = require("./helpers");
+const { shortURLCodeExists, getUrlsByUser, userOwnsUrl, generateRandomString, parseLongURL, isUserLoggedIn, generatePassword, userIsRegistered, getUserIdFromCredentials } = require("./helpers");
 
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userId: "a2b3c4"
-   },
+    userId: "a2b3c4",
+    creationDate: new Date(),
+    numberOfUses: 0
+  },
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userId: "a2b3c4"
-   },
-   "v9smk3": {
+    userId: "a2b3c4",
+    creationDate: new Date(),
+    numberOfUses: 0
+  },
+  "v9smk3": {
     longURL: "http://www.yahoo.com",
-    userId: "bv12cd"
-   },
-   "vh8sdx": {
+    userId: "bv12cd",
+    creationDate: new Date(),
+    numberOfUses: 0
+  },
+  "vh8sdx": {
     longURL: "http://www.example.com",
-    userId: "bv12cd"
-   }
+    userId: "bv12cd",
+    creationDate: new Date(),
+    numberOfUses: 0
+  }
 };
-
-
 
 const users = {
   a2b3c4: {
@@ -40,112 +46,10 @@ const users = {
   },
 };
 
-// Internal Functions for the Server
-
-// const shortURLCodeExists = (shortURL) => {  
-//   return (Object.prototype.hasOwnProperty.call(urlDatabase, shortURL));
-// };
-
-// const getUrlsByUser = (user) => {
-//   const returnObj = {};
-//   const userId = user.id;  
-//   console.log("passed userId:", userId)
-//   if (userId) {
-//     for (let shortURLCode in urlDatabase) {      
-//       if (urlDatabase[shortURLCode].userId === userId) {
-//         returnObj[shortURLCode] = urlDatabase[shortURLCode].longURL;
-//       }
-//     }
-//   }  
-//   return returnObj;
-// };
-
-// const userOwnsUrl = (user, shortURLCode) => {
-//   const userId = user.id;  
-//   console.log("userId:", userId);
-//   console.log("shortCode:", shortURLCode);
-//   if (Array.prototype.hasOwnProperty.call(urlDatabase, shortURLCode)) {
-//     if (urlDatabase[shortURLCode].userId === userId) {
-//       return true;
-//     }    
-//   }
-//   return false;
-// };
-
-// const generateRandomString = (length) => {
-//   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-//   let result = '';
-
-//   for (let i = 0; i < length; i++) {
-//     let randomIndex = Math.floor(Math.random() * chars.length);
-//     result += chars[randomIndex];
-//   }
-//   return result;
-// };
-
-// const parseLongURL = (longURL) => {
-//   let result = longURL.toLowerCase();
-//   if (!result.startsWith("http://") && !result.startsWith("https://")) {
-//     result = "http://" + result;
-//   }
-//   return result;
-// };
-
-// const isUserLoggedIn = (cookies) => {
-//   if (cookies["user_id"] && Object.prototype.hasOwnProperty.call(users, cookies["user_id"])) {
-//     return true;
-//   }
-//   return false;
-// };
-
-// const getUserFromCookie = (cookieValue) => {
-//   for (const user in users) {
-//     if (user.id === cookieValue) {
-//       return user;
-//     }
-//   }
-//   return null;
-// };
-
-// const generatePassword = (userPassword) => {
-//   return bcrypt.hashSync(userPassword, 10);
-// };
-
-// // checkPassword -- pass true if needs to check both user and password exist/match, otherwise simple email lookup.
-// const userIsRegistered = (user, checkPassword) => {  
-//   for (const userId in users) {
-//     const storedEmail = users[userId].email;
-//     const storedPassword = users[userId].password;
-//     if (checkPassword) {
-//       if (!bcrypt.compareSync(user.password, storedPassword)) { // if it doesnt match, not our user, move on.
-//         continue;
-//       }
-//     }
-//     if (user.email === storedEmail) {
-//       return true;
-//     }
-//   }
-//   return false;
-// };
-
-// const getUserIdFromCredentials = (email, password) => {
-//   for (const userId in users) {
-//     const storedEmail = users[userId].email;
-//     const storedPassword = users[userId].password;
-//     if (storedEmail === email && bcrypt.compareSync(password, storedPassword)) {
-//       return users[userId].id;
-//     }
-//   }
-//   return null;
-// };
-
-// ------------------------
-
 // engine specific settings | MIDDLEWARE
 app.set("view engine", "ejs"); // define EJS as engine
 app.use(express.urlencoded({ extended: true })); // make buffer readable.
-// app.use(cookieParser());
-app.use(morgan('dev'));
+app.use(morgan('dev')); // print every http request to console.
 app.use(cookieSession({
   name: 'session',
   keys: ["someReallyWrongAndSuperSecretSecretForSure", "AndYetAnothersUpErDuPerSecretSecret", "AndWhatDoYouKnowItsYetAnotherSuPeRduperSecretForrealsSecret!"],
@@ -157,15 +61,18 @@ app.use(cookieSession({
 // Routing (GET)
 
 app.get("/", (req, res) => {
+  if (!isUserLoggedIn(req.session, users)) {
+    return res.redirect("/login");
+  }
   res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
   const templateVars = { user: {} };
-  if (!isUserLoggedIn(req.session, users)) {
-    return res.redirect(401, "/login");
-  }
   templateVars.user = users[req.session["user_id"]];
+  if (!isUserLoggedIn(req.session, users)) {
+    return res.status(401).redirect("/login");
+  }
   templateVars.urls = getUrlsByUser(templateVars.user, urlDatabase);
   console.log(templateVars);
   res.render("urls_index", templateVars);
@@ -175,32 +82,34 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session, users)) {
-    return res.redirect(401, "/login");
-  }
   templateVars.user = users[req.session["user_id"]];
+  if (!isUserLoggedIn(req.session, users)) {
+    return res.status(401).redirect("/login");
+  }
+    
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     user: {}
-  };  
-  if (!isUserLoggedIn(req.session, users)) {
-    return res.redirect(401, "/login");
-  }
+  };
   templateVars.user = users[req.session["user_id"]];
+  if (!isUserLoggedIn(req.session, users)) {
+    return res.status(401).redirect("login");
+  }
   
   if (!shortURLCodeExists(req.params.id, urlDatabase)) {
     templateVars.message = `Invalid ShortCode`;
-    return res.status(400).render("showMessage", templateVars);  }
+    return res.status(400).render("showMessage", templateVars);
+  }
 
   if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
-    templateVars.message = `Access Denied. You do not have access to view/edit ${req.params.id}`
+    templateVars.message = `Access Denied. You do not have access to view/edit ${req.params.id}`;
     return res.status(401).render("showMessage", templateVars);
   }
   templateVars.id = req.params.id;
-  templateVars.longURL = urlDatabase[templateVars.id].longURL;  
+  templateVars.longURL = urlDatabase[templateVars.id].longURL;
   
   res.render("url_shows", templateVars);
 });
@@ -230,31 +139,25 @@ app.get("/u/:id", (req, res) => {
   const templateVars = {
     user: {}
   };
-
+  templateVars.user = users[req.session["user_id"]];
   if (Object.prototype.hasOwnProperty.call(urlDatabase, req.params.id)) {
-    console.log(`Sending them to: ${urlDatabase[req.params.id].longURL}`);
+    urlDatabase[req.params.id].numberOfUses += 1;
     res.redirect(urlDatabase[req.params.id].longURL);
   } else {
-    console.log(`Sending them ...nowhere hopefully.`);
-    if (isUserLoggedIn(req.session, users)) {
-      templateVars.user = users[req.session["user_id"]];
-    }
     templateVars.message = `Invalid shortCode: ${req.params.id}`;
-    res.status(404).render("showMessage", templateVars)    
+    res.status(404).render("showMessage", templateVars);
   }
 });
 
 //  handle post requests
 
 app.post("/urls", (req, res) => {
-  const templateVars = {
-    user: {}
-  };
+  const templateVars = {};
+  templateVars.user = users[req.session["user_id"]];
   if (!isUserLoggedIn(req.session, users)) {
     templateVars.message = "Cannot create short URL. User is not logged in.";
     return res.render("showMessage", templateVars);
   }
-  templateVars.user = users[req.session["user_id"]];
   if (!req.body.longURL) {
     templateVars.message = "The URL cannot be empty.";
     return res.status(400).render("showMessage", templateVars);
@@ -262,8 +165,10 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(6);
   const newLink = {
     longURL: parseLongURL(req.body.longURL),
-    userId: templateVars.user.id
-  };    
+    userId: templateVars.user.id,
+    creationDate: new Date(),
+    numberOfUses: 0
+  };
   urlDatabase[shortURL] = newLink;
   res.redirect(`/urls/${shortURL}`);
 });
@@ -272,23 +177,17 @@ app.post("/urls/:id/delete", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session, users)) {
-    templateVars.message = `Access Denied. You do not have access to delete ${req.params.id}`
-    return res.render("showMessage", templateVars);
-  }
   templateVars.user = users[req.session["user_id"]];
-  console.log(":id/delete route, id:", req.params.id);  
   if (!shortURLCodeExists(req.params.id, urlDatabase)) { // another error
     console.log("I shouldnt be here...");
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
-  if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) { // different error
-    templateVars.message = "Access denied."
-    console.log("Access was denid.");
-    console.log(templateVars);
+  if (!isUserLoggedIn(req.session, users) || !userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
+    templateVars.message = `Access Denied. You do not have access to delete ${req.params.id}`;
     return res.status(401).render("showMessage", templateVars);
   }
+  
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
@@ -297,19 +196,16 @@ app.post("/urls/:id/update", (req, res) => {
   const templateVars = {
     user: {}
   };
-  if (!isUserLoggedIn(req.session, users)) {
-    templateVars.message = "Cannot update URL. User is not logged in.";
-    return res.render("showMessage", templateVars);
-  }
   templateVars.user = users[req.session["user_id"]];
   if (!shortURLCodeExists(req.params.id, urlDatabase)) { // another error
     templateVars.message = `Invalid ShortCode`;
     return res.status(400).render("showMessage", templateVars);
   }
-  if (!userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) { // different error
-    templateVars.message = `Access Denied. You do not have access to delete ${req.params.id}`
-    return res.render("showMessage", templateVars);    
+  if (!isUserLoggedIn(req.session, users) || !userOwnsUrl(templateVars.user, req.params.id, urlDatabase)) {
+    templateVars.message = `Access Denied. You do not have access to update ${req.params.id}`;
+    return res.status(401).render("showMessage", templateVars);
   }
+  
   if (req.body.longURL) {
     urlDatabase[req.params.id].longURL = parseLongURL(req.body.longURL);
   }
@@ -322,7 +218,7 @@ app.post("/login", (req, res) => {
   };
   if (!userIsRegistered({ email: req.body.email, password: req.body.password }, true, users)) {
     templateVars.message = "User and/or Password invalid.";
-    return res.status(401).render("showMessage", templateVars);
+    return res.status(403).render("showMessage", templateVars);
   }
   if (req.body.email) {
     req.session["user_id"] = getUserIdFromCredentials(req.body.email, req.body.password, users);
@@ -340,15 +236,13 @@ app.post("/register", (req, res) => {
     password: req.body.password
   };
 
-  console.log(user);
-
   if (!user.email || !user.password) {
     templateVars.message = "Please make sure to input both an email AND password.";
     return res.status(400).render("showMessage", templateVars);
   }
 
-  if (userIsRegistered(user, false, users)) {    
-    templateVars.message = "User already registered. Please login instead or register new user.";        
+  if (userIsRegistered(user, false, users)) {
+    templateVars.message = "User already registered. Please login instead or register new user.";
     return res.status(400).render("showMessage", templateVars);
   }
 
@@ -359,7 +253,6 @@ app.post("/register", (req, res) => {
   templateVars.user = user;
   req.session["user_id"] = user.id;
   res.redirect("/urls");
-  console.log(users);
 });
 
 app.post("/logout", (req, res) => {

@@ -1,6 +1,6 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
-    <a class="navbar-brand" href="/urls">TinyApp</a>
+    <a class="navbar-brand" href="/">TinyApp</a>
     <button
       class="navbar-toggler"
       type="button"
@@ -20,14 +20,16 @@
         </div>
       </div>
     </div>    
+    <% if (typeof user !== 'undefined') { %>
     <% if (user.email) { %>          
       <span>Logged in as: <%= user.email %></span>
       <form method="POST" action="/logout" style="display: inline-block;">
         <button class="btn btn-primary" type="submit">Logout</button>
-      </form>        
+      </form>              
     <% } else { %>                        
       <a class="btn btn-primary" href="/login" style="margin-right: 10px">Login</button>
       <a class="btn btn-info" href="/register">Sign Up</a>
+    <% } %>
     <% } %>
   </nav>
 </header>

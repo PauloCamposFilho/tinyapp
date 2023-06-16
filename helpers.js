@@ -10,7 +10,11 @@ const getUrlsByUser = (user, urlDatabase) => {
   if (userId) {
     for (let shortURLCode in urlDatabase) {
       if (urlDatabase[shortURLCode].userId === userId) {
-        returnObj[shortURLCode] = urlDatabase[shortURLCode].longURL;
+        returnObj[shortURLCode] = {
+          longURL: urlDatabase[shortURLCode].longURL,
+          creationDate: urlDatabase[shortURLCode].creationDate,
+          numberOfUses: urlDatabase[shortURLCode].numberOfUses
+        };
       }
     }
   }

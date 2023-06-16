@@ -16,29 +16,45 @@ const users = {
     password: "4321",
   },
 };
-
+const theDate = new Date();
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userId: "a2b3c4"
-   },
+    userId: "a2b3c4",
+    creationDate: theDate,
+    numberOfUses: 0
+  },
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userId: "a2b3c4"
-   },
-   "v9smk3": {
+    userId: "a2b3c4",
+    creationDate: theDate,
+    numberOfUses: 0
+  },
+  "v9smk3": {
     longURL: "http://www.yahoo.com",
-    userId: "bv12cd"
-   },
-   "vh8sdx": {
+    userId: "bv12cd",
+    creationDate: theDate,
+    numberOfUses: 0
+  },
+  "vh8sdx": {
     longURL: "http://www.example.com",
-    userId: "bv12cd"
-   }
+    userId: "bv12cd",
+    creationDate: theDate,
+    numberOfUses: 0
+  }
 };
 
 const userOwnedURLs = {
-  "b2xVn2": "http://www.lighthouselabs.ca",       
-  "9sm5xK": "http://www.google.com",   
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    creationDate: theDate,
+    numberOfUses: 0
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    creationDate: theDate,
+    numberOfUses: 0
+  }
 };
 
 // -----------------
@@ -57,6 +73,8 @@ describe("#shortURLCodeExists", () => {
 describe("#getUrlsByUser", () =>{
   it("should return an object with all owned urls", () => {
     const userURLs = getUrlsByUser({ id: "a2b3c4" }, urlDatabase);
+    console.log("userURLS:", userURLs);
+    console.log("ownedURLS:", userOwnedURLs);
     assert.deepEqual(userURLs, userOwnedURLs);
   });
   it("should return an empty object if user doesnt own any urls", () => {
@@ -71,14 +89,14 @@ describe("#userOwnsUrl", () => {
     const user = {
       id: "a2b3c4"
     };
-    const shortURLCode = "b2xVn2" // belongs to the user.
+    const shortURLCode = "b2xVn2"; // belongs to the user.
     assert.isTrue(userOwnsUrl(user, shortURLCode, urlDatabase));
   });
   it("should return false if the shortcode doesnt belong to userId", () => {
     const user = {
       id: "nottheowner"
     };
-    const shortURLCode = "b2xVn2" // doesnt belong.
+    const shortURLCode = "b2xVn2"; // doesnt belong.
     assert.isFalse(userOwnsUrl(user, shortURLCode, urlDatabase));
   });
   it("should also return false if the shortcode doesnt even exist, thus can never belong", () => {
@@ -113,7 +131,7 @@ describe("#parseLongUrl", () => {
     assert.isNull(actualString);
   });
   it("should correctly parse a URL that does not contain the protocol (http:// or http://) into one that does", () => {
-    const testUrl = "www.idonthavetheprotocol.com"
+    const testUrl = "www.idonthavetheprotocol.com";
     const actualString = parseLongURL(testUrl);
     const expectedString = "http://www.idonthavetheprotocol.com";
     assert.equal(actualString, expectedString);
@@ -135,10 +153,10 @@ describe("#isUserLoggedIn", () => {
 
 describe("#getUserFromCookie", () => {
   it("should return a user object corresponding to the session cookie, if it exists", () => {
-    const expectedUserObj = {      
+    const expectedUserObj = {
       id: "a2b3c4",
       email: "a@a.com",
-      password: "$2a$10$p8p4vc92uWVYamR5NfCEp.8oD6w9xTj77SZKUgr6UVrMFy0vpG7oy", // abcd            
+      password: "$2a$10$p8p4vc92uWVYamR5NfCEp.8oD6w9xTj77SZKUgr6UVrMFy0vpG7oy", // abcd
     };
     const cookieValue = "a2b3c4"; //userId stored into the session cookie post-decryption.
     assert.deepEqual(getUserFromCookie(cookieValue, users), expectedUserObj);
@@ -179,7 +197,7 @@ describe("#userIsRegistered", () => {
     const userObj = {
       // id: "a2b3c4" not required
       email: "a@a.com",
-      password: "abcd" 
+      password: "abcd"
     };
     const expectedUserObj = {
       id: "a2b3c4",
@@ -192,11 +210,11 @@ describe("#userIsRegistered", () => {
     const user = userIsRegistered({ email: "i@dont.exit" }, false, users);
     assert.isUndefined(user);
   });
-  it("should return undefined if an existing email is given with the wrong password (checkPassword = true)", () => {    
+  it("should return undefined if an existing email is given with the wrong password (checkPassword = true)", () => {
     const userObj = {
       // id: "a2b3c4" not required
       email: "a@a.com", // exists
-      password: "notThePassword" 
+      password: "notThePassword"
     };
     assert.isUndefined(userIsRegistered(userObj, true, users));
   });
