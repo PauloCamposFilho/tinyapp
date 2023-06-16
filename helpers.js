@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 
+// returns true | false on whether a given shortURL exists.
 const shortURLCodeExists = (shortURL, urlDatabase) => {
   return (Object.prototype.hasOwnProperty.call(urlDatabase, shortURL));
 };
@@ -21,6 +22,7 @@ const getUrlsByUser = (user, urlDatabase) => {
   return returnObj;
 };
 
+// returns true | false on whether a given shortURL is owned by the user. Permission-related.
 const userOwnsUrl = (user, shortURLCode, urlDatabase) => {
   const userId = user.id;
   if (Array.prototype.hasOwnProperty.call(urlDatabase, shortURLCode)) {
@@ -31,6 +33,7 @@ const userOwnsUrl = (user, shortURLCode, urlDatabase) => {
   return false;
 };
 
+// helper function that returns random alphanumeric string of a given length.
 const generateRandomString = (length) => {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   let result = '';
@@ -42,6 +45,7 @@ const generateRandomString = (length) => {
   return result;
 };
 
+// helper function to ensure that given URLs are saved with protocol in case user did not provide it.
 const parseLongURL = (longURL) => {
   if (!longURL || typeof longURL !== 'string') {
     return null;
@@ -53,6 +57,7 @@ const parseLongURL = (longURL) => {
   return result;
 };
 
+// checks the session cookie against the database to ensure that the user is logged on. Permission-related
 const isUserLoggedIn = (cookies, users) => {
   if (cookies["user_id"] && Object.prototype.hasOwnProperty.call(users, cookies["user_id"])) {
     return true;
@@ -60,20 +65,13 @@ const isUserLoggedIn = (cookies, users) => {
   return false;
 };
 
-const getUserFromCookie = (cookieValue, users) => {
-  for (const userKey in users) {
-    if (users[userKey].id === cookieValue) {
-      return users[userKey];
-    }
-  }
-  return null;
-};
 
 const generatePassword = (userPassword) => {
   return bcrypt.hashSync(userPassword, 10);
 };
 
-// checkPassword -- pass true if needs to check both user and password exist/match, otherwise simple email lookup.
+// returns a user object if the user is registered/exists in the database.
+// checkPassword -- pass "true" if needs to check both user and password exist/match, "false" will otherwise be a simple email lookup.
 const userIsRegistered = (user, checkPassword, users) => {  
   for (const userId in users) {
     const storedEmail = users[userId].email;
@@ -90,12 +88,23 @@ const userIsRegistered = (user, checkPassword, users) => {
   return;
 };
 
+// simplified lookup that will return just the userId given valid credentials.
 const getUserIdFromCredentials = (email, password, users) => {
   for (const userId in users) {
     const storedEmail = users[userId].email;
     const storedPassword = users[userId].password;
     if (storedEmail === email && bcrypt.compareSync(password, storedPassword)) {
       return users[userId].id;
+    }
+  }
+  return null;
+};
+
+// helper function that returns a user object from a given session cookie. Deprecated, not in use.
+const getUserFromCookie = (cookieValue, users) => {
+  for (const userKey in users) {
+    if (users[userKey].id === cookieValue) {
+      return users[userKey];
     }
   }
   return null;
