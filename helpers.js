@@ -5,6 +5,7 @@ const shortURLCodeExists = (shortURL, urlDatabase) => {
   return (Object.prototype.hasOwnProperty.call(urlDatabase, shortURL));
 };
 
+// returns an object with the url data of the shortcodes that belong to the user.
 const getUrlsByUser = (user, urlDatabase) => {
   const returnObj = {};
   const userId = user.id;
@@ -74,7 +75,7 @@ const isUserLoggedIn = (cookies, users) => {
   return false;
 };
 
-
+// returns a hashed password with a Salt of 10.
 const generatePassword = (userPassword) => {
   return bcrypt.hashSync(userPassword, 10);
 };
